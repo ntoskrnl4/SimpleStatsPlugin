@@ -44,7 +44,11 @@ public class ChunkCounter implements Listener {
 		totalChunkCount += 1;
 
 		String worldName = event.getWorld().getName();
-		dimensionList.put(worldName, dimensionList.get(worldName)+1);
+		Integer current = dimensionList.get(worldName);
+		if (current == null) {
+			current = 0;
+		}
+		dimensionList.put(worldName, current+1);
 		// Add one to this dimension's chunk count
 	}
 
@@ -67,8 +71,8 @@ public class ChunkCounter implements Listener {
 
 	type: { String[] , int[] }
 
-	{{"overworld", "the_nether", "the_end"},
-	 {   621,          16,          256   }}
+	{{"world", "world_nether", "world_the_end"},
+	 {  621,           16,            256     }}
 
 	(spacing added for visual clarity)
 	where world names are in the first array and chunk counts are in the second.

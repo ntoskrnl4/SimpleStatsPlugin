@@ -10,6 +10,7 @@ public class SimpleStatsPlugin extends JavaPlugin {
 		this.getCommand("stats").setExecutor(new StatisticsCommand());
 
 		getServer().getPluginManager().registerEvents(new TickTimerTask(), this);
+		getServer().getPluginManager().registerEvents(new ChunkCounter(), this);
 	}
 
 	@Override
