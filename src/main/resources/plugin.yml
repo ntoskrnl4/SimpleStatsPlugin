@@ -1,0 +1,8 @@
+name: SimpleStatsPlugin
+version: 0
+api-version: 1.16
+main: io.github.ntoskrnl4.SimpleStatsPlugin
+commands:
+  stats:
+    description: Shows statistics about current memory, available CPUs, loaded chunks, and server timings.
+    usage: /stats
