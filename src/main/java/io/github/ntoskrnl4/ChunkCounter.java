@@ -12,7 +12,7 @@ import java.util.Map;
 public class ChunkCounter implements Listener {
 
 	private static int totalChunkCount = 0;
-	private static final Map<String, Integer> dimensionList = new HashMap<>(8, 0.5f);
+	private static final Map<String, Integer> dimensionList = new HashMap<>(8);
 	/*
 	TLDR: Explanation of HashMap and the loadFactor argument
 	A HashMap is equivalent to a dictionary in Python, where key-value pairs are
@@ -28,8 +28,8 @@ public class ChunkCounter implements Listener {
 	stored in "buckets" depending on the key's hash. This makes it quick when
 	there are lots of objects in the HashMap - it doesn't have to check the key
 	against every single one, but now just against ones that are in the same hash
-	bucket. However, at some point, those buckets will get a bit full. In order
-	to keep up efficiency, Java will then recalculate ALL hashes and redistribute
+	bucket. However, at some point, those buckets will get a bit full. To
+	optimize efficiency, Java will then recalculate ALL hashes and redistribute
 	them into more buckets than before (so that it's still only checking against
 	a few objects in one bucket, rather than against 50 objects in the entire
 	table). The point that it will expand the table and redistribute buckets is
@@ -65,7 +65,7 @@ public class ChunkCounter implements Listener {
 		return totalChunkCount;
 	}
 
-	/*
+	/**
 	Get the number of chunks in each dimension. The result will be a
 	rectangular two-dimensional array that looks something like this:
 
@@ -74,9 +74,7 @@ public class ChunkCounter implements Listener {
 	{{"world", "world_nether", "world_the_end"},
 	 {  621,           16,            256     }}
 
-	(spacing added for visual clarity)
 	where world names are in the first array and chunk counts are in the second.
-	See StatisticsCommand.java Line 51 to see how the world names/values are used.
 	*/
 	public static Object[][] getChunkDimensions() {
 		ArrayList<String> names = new ArrayList<>();
