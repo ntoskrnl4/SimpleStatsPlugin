@@ -1,19 +1,53 @@
 package io.github.ntoskrnl4;
 
-import org.bukkit.Bukkit;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent;
+import com.destroystokyo.paper.event.server.ServerTickStartEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 
-public class TickTimerTask {
+public class TickTimerTask implements Listener {
+
+	// The plugin's class is never actually created, so everything runs in a static context.
+	// Throw static on everything!
+	private static long tickStartTime = 0;
+	private static long tickFinishTime = 0;
+	private static double[] latest_ticks = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+	@EventHandler
+	public static void startTickTiming(ServerTickStartEvent event) {
+		// Get the EXACT time, to the nanosecond, we started processing this tick
+		tickStartTime = System.nanoTime();
+	}
+
+	@EventHandler
+	public static void finishTickTiming(ServerTickEndEvent event) {
+		// Get the EXACT time, to the nanosecond, we finished processing this tick
+		// Then figure out how long it took/.,>?,/,
+		tickFinishTime = System.nanoTime();
+		calculateTick();
+	}
+
+	public static void calculateTick() {
+		latest_ticks[9] = latest_ticks[8];
+		latest_ticks[8] = latest_ticks[7];
+		latest_ticks[7] = latest_ticks[6];
+		latest_ticks[6] = latest_ticks[5];
+		latest_ticks[5] = latest_ticks[4];
+		latest_ticks[4] = latest_ticks[3];
+		latest_ticks[3] = latest_ticks[2];
+		latest_ticks[2] = latest_ticks[1];
+		latest_ticks[1] = latest_ticks[0];
+		latest_ticks[0] = (tickFinishTime-tickStartTime)/1e9;
+	}
 
 	public static double avgTickTime() {
 		// Averaging algorithm (of the last couple of ticks)
 		// Returns in the scale of seconds
-		long[] tickTimes = Bukkit.getTickTimes();
-		long sum = 0;
-
-		for (int i=0; i < 10; i++) {
-			sum += tickTimes[i];
+		double sum = 0.0;
+		for (double i: latest_ticks) {
+			sum += i;
 		}
-		return (sum / 10.0) / 1e9;
+		return sum / latest_ticks.length;
 	}
 
 	public static double[] TPSValues() {
@@ -28,16 +62,15 @@ public class TickTimerTask {
 		return results;
 	}
 
-	public static double[] latestTickTimes(boolean asMilliseconds, int length) {
-		long[] latest_ticks = Bukkit.getTickTimes();
-		double[] values = new double[length];
-		for (int i=0; i < length; i++) {
+	public static double[] latestTickTimes(boolean asMilliseconds) {
+		double[] values = new double[10];
+		for (int i=0; i<latest_ticks.length; i++) {
 			if (asMilliseconds) {
-				values[i] = (int)(latest_ticks[i]/1000) / 1e3;
-				// Divide from nanoseconds to microseconds, then divide to milliseconds (which is rounded to microsecond level)
+				values[i] = (int)(latest_ticks[i]*1e6)/1e3;
+				// Cast from seconds to microseconds, then divide to milliseconds (which is rounded to microsecond level)
 			} else {
-				values[i] = (int)(latest_ticks[i]/1000) / 1e6;
-				// Divide from nanoseconds to microseconds, then divide to seconds (which is rounded to microsecond level)
+				values[i] = (int)(latest_ticks[i]*1e6)/1e6;
+				// Cast from seconds to microseconds, then divide back to seconds (which is rounded to microsecond level)
 			}
 		}
 		return values;

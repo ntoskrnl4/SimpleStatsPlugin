@@ -6,6 +6,8 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,6 +17,7 @@ public class StatisticsCommand implements CommandExecutor {
 	String[] systemInfoTriggers = {"system", "cpu", "memory"};
 	String[] tickInfoTriggers = {"tick", "ticks", "physics", "engine", "game", "lag"};
 	String[] chunkInfoTriggers = {"chunk", "chunks", "world", "worlds", "loaded"};
+	String[] entityInfoTriggers = {"entity", "entities", "mobs"};
 
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		// sender: Object that you can .sendMessage() and it will be sent back to whoever ran the command
@@ -29,10 +32,12 @@ public class StatisticsCommand implements CommandExecutor {
 			TextComponent[] systemInfo = systemInfo(false);
 			TextComponent[] tickInfo = tickInfo(true);
 			TextComponent[] chunkInfo = chunkInfo(true);
+			TextComponent[] entityInfo = entityInfo(true);
 
-			TextComponent[] msg = Arrays.copyOf(systemInfo, systemInfo.length + tickInfo.length + chunkInfo.length);
+			TextComponent[] msg = Arrays.copyOf(systemInfo, systemInfo.length + tickInfo.length + chunkInfo.length + entityInfo.length);
 			System.arraycopy(tickInfo, 0, msg, systemInfo.length, tickInfo.length);
 			System.arraycopy(chunkInfo, 0, msg, systemInfo.length + tickInfo.length, chunkInfo.length);
+			System.arraycopy(entityInfo, 0, msg, systemInfo.length + tickInfo.length + chunkInfo.length, entityInfo.length);
 
 			sender.sendMessage(msg);
 
@@ -45,9 +50,12 @@ public class StatisticsCommand implements CommandExecutor {
 		} else if (contains(args[0], chunkInfoTriggers)) {
 			sender.sendMessage(chunkInfo(false));
 
+		} else if (contains(args[0], entityInfoTriggers)) {
+			sender.sendMessage(entityInfo(false));
+
 		} else {
 			// If we didn't recognize what they typed, return an error.
-			sender.sendMessage(ChatColor.RED+"For all stats, run /stats\nValid subcommands are \"system\", \"tick\", or \"chunks\"");
+			sender.sendMessage(ChatColor.RED+"For all stats, run /stats\nValid subcommands are \"system\", \"tick\", \"chunks\", \"entities\"");
 		}
 		return true;
 	}
@@ -119,12 +127,39 @@ public class StatisticsCommand implements CommandExecutor {
 		String hoverText = "";
 
 		for(int i=0; i < values[0].length; i++) {
-			hoverText += "\n" + values[0][i] + ": " + values[1][i];
+			hoverText += values[0][i] + ": " + values[1][i] + "\n";
 		}
+
+		hoverText += "total: " + ChunkCounter.getTotalChunkCount();
 
 		chunkText.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText)));
 
 		return new TextComponent[]{chunkText};
+	}
+
+	public TextComponent[] entityInfo(boolean leadingNewline) {
+		String lead = leadingNewline ? "\n" : "";
+
+		int n_entity = 0;
+		for (World world: Bukkit.getWorlds()) {
+			n_entity += world.getEntities().size();
+		}
+
+		TextComponent msg = new TextComponent(lead + "Loaded Entities: ");
+		TextComponent e_val = new TextComponent(String.valueOf(n_entity));
+		e_val.setColor(StatisticsCommand.AvgTickColor(n_entity/12.0));
+		msg.addExtra(e_val);
+		msg.setColor(ChatColor.AQUA);
+
+		String hoverText = "";
+		for(int i=0; i < Bukkit.getWorlds().size(); i++) {
+			hoverText += Bukkit.getWorlds().get(i).getName() + ": " + Bukkit.getWorlds().get(i).getEntities().size() + "\n";
+		}
+		hoverText += "total: " + n_entity;
+
+		msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText)));
+
+		return new TextComponent[]{msg};
 	}
 
 	private boolean contains(String test, String[] list) {
@@ -140,7 +175,7 @@ public class StatisticsCommand implements CommandExecutor {
 			 "\nLast 10 Ticks Average: " + data[2] + " ms" +
 			 "\nEffective Uncapped TPS: " + data[1] +
 		   "\n\nLast 10 ticks, most recent first:";
-		for (double t: TickTimerTask.latestTickTimes(true, 10)) {
+		for (double t: TickTimerTask.latestTickTimes(true)) {
 			text += "\n"+t+" ms";
 		}
 		return text;
