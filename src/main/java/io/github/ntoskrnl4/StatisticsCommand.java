@@ -47,7 +47,7 @@ public class StatisticsCommand implements CommandExecutor {
 
 		} else {
 			// If we didn't recognize what they typed, return an error.
-			sender.sendMessage(ChatColor.RED+"Unknown subcommand: valid options are \"system\", \"tick\", \"chunks\", or null (no argument)");
+			sender.sendMessage(ChatColor.RED+"For all stats, run /stats\nValid subcommands are \"system\", \"tick\", or \"chunks\"");
 		}
 		return true;
 	}
@@ -95,7 +95,7 @@ public class StatisticsCommand implements CommandExecutor {
 		msg.addExtra(l1p2);
 		msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover_text)));
 
-		TextComponent line2 = new TextComponent("\nAverage Tick (last 5): ");
+		TextComponent line2 = new TextComponent("\nAverage Tick (last 10): ");
 		line2.setColor(ChatColor.GOLD);
 		TextComponent l2p2 = new TextComponent(data[2] + " ms");
 		l2p2.setColor(AvgTickColor(data[2]));
@@ -107,7 +107,6 @@ public class StatisticsCommand implements CommandExecutor {
 
 	public TextComponent[] chunkInfo(boolean leadingNewline) {
 		Object[][] values = ChunkCounter.getChunkDimensions();
-		TextComponent[] ret = new TextComponent[values[0].length+1];
 
 		String lead = leadingNewline ? "\n" : "";
 
@@ -116,17 +115,16 @@ public class StatisticsCommand implements CommandExecutor {
 		TextComponent chunkCount = new TextComponent(String.valueOf(ChunkCounter.getTotalChunkCount()));
 		chunkCount.setColor(ChatColor.LIGHT_PURPLE);
 		chunkText.addExtra(chunkCount);
-		ret[0] = chunkText;
+
+		String hoverText = "";
 
 		for(int i=0; i < values[0].length; i++) {
-			TextComponent world = new TextComponent("\n" + values[0][i] + ": ");
-			world.setColor(ChatColor.DARK_AQUA);
-			TextComponent value = new TextComponent(String.valueOf(values[1][i]));
-			value.setColor(ChatColor.DARK_PURPLE);
-			world.addExtra(value);
-			ret[i+1] = world;
+			hoverText += "\n" + values[0][i] + ": " + values[1][i];
 		}
-		return ret;
+
+		chunkText.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText)));
+
+		return new TextComponent[]{chunkText};
 	}
 
 	private boolean contains(String test, String[] list) {
@@ -139,16 +137,16 @@ public class StatisticsCommand implements CommandExecutor {
 
 	private String detailedTPS(double[] data) {
 		String text = "Current Server TPS: " + data[0] +
-			 "\nLast 5 Ticks Average: " + data[2] + " ms" +
+			 "\nLast 10 Ticks Average: " + data[2] + " ms" +
 			 "\nEffective Uncapped TPS: " + data[1] +
-		   "\n\nLast 5 ticks, most recent first:";
-		for (double t: TickTimerTask.latestTickTimes(true)) {
+		   "\n\nLast 10 ticks, most recent first:";
+		for (double t: TickTimerTask.latestTickTimes(true, 10)) {
 			text += "\n"+t+" ms";
 		}
 		return text;
 	}
 
-	private ChatColor TPSColor(double tps) {
+	protected static ChatColor TPSColor(double tps) {
 		if (tps > 19.75) return ChatColor.GREEN;
 		if (tps > 18.0) return ChatColor.AQUA;
 		if (tps > 16.0) return ChatColor.YELLOW;
@@ -157,7 +155,7 @@ public class StatisticsCommand implements CommandExecutor {
 		return ChatColor.DARK_RED;
 	}
 
-	private ChatColor AvgTickColor(double tick) {
+	protected static ChatColor AvgTickColor(double tick) {
 		if (tick < 30.00) return ChatColor.GREEN;
 		if (tick < 50.00) return ChatColor.YELLOW;
 		if (tick < 75.00) return ChatColor.GOLD;
